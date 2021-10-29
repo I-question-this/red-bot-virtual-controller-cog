@@ -265,7 +265,11 @@ def main(controller_name:str=None) -> None:
             except:
                 print(f"{b} is not a button")
         if len(buttons) > 0:
+            wait_time = 3
+            print(f"Waiting {wait_time} seconds")
+            time.sleep(wait_time)
             GC.push_buttons(buttons, 0.5)
+            print(f"Pressed {buttons}")
 
     GC.close()
 
