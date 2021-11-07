@@ -1,4 +1,3 @@
-
 class Version:
     def __init__(self, major:int, minor:int, bug:int):
         """Object for version recording.
@@ -73,4 +72,3 @@ class Version:
 
 # The version for DadBot
 __version__ = Version(0,0,0)
-
