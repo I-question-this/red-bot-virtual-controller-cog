@@ -81,6 +81,16 @@ class GameCubeController():
         # Synchronize the lifts
         self.ui.syn()
 
+    # Start button
+    def push_start(self, seconds:float=0.5):
+        """Push Start button for specified time
+        Parameters
+        ----------
+        seconds: float = 0.5
+            Seconds to hold the button down for
+        """
+        self.push_buttons([evdev.ecodes.BTN_START], seconds)
+
     # Right thumb buttons
     def push_a(self, seconds:float=0.5):
         """Push A button for specified time
