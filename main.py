@@ -30,6 +30,48 @@ class ChannelController(GameCubeController):
         super().close()
         await self.channel.send(f"{self.ui.name}: CLOSED")
 
+    def perform_action(self, button:str):
+        if button == "a":
+            self.push_a()
+        elif button == "b":
+            self.push_b()
+        elif button == "x":
+            self.push_x()
+        elif button == "y":
+            self.push_y()
+        elif button == "z":
+            self.push_z()
+        elif button == "tl" or button == "trigger left":
+            self.push_left_trigger()
+        elif button == "tr" or button == "trigger right":
+            self.push_right_trigger()
+        elif button == "up":
+            self.push_control_stick_up()
+        elif button == "down":
+            self.push_control_stick_down()
+        elif button == "left":
+            self.push_control_stick_left()
+        elif button == "right":
+            self.push_control_stick_right()
+        if button == "start":
+            self.push_start()
+        elif button == "cup":
+            self.push_c_stick_up()
+        elif button == "cdown":
+            self.push_c_stick_down()
+        elif button == "cleft":
+            self.push_c_stick_left()
+        elif button == "cright":
+            self.push_c_stick_right()
+        elif button == "dup":
+            self.push_dpad_up()
+        elif button == "ddown":
+            self.push_dpad_down()
+        elif button == "dleft":
+            self.push_dpad_left()
+        elif button == "dright":
+            self.push_dpad_left()
+
 
 class MainBot(commands.Cog):
     def __init__(self, bot:Red):
@@ -77,87 +119,9 @@ class MainBot(commands.Cog):
             return
 
         # Interpret message
-        button = msg.content.lower()
-        if button == "a":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_a()
-        elif button == "b":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_b()
-        elif button == "x":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_x()
-        elif button == "y":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_y()
-        elif button == "z":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_z()
-        elif button == "tl" or button == "trigger left":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_left_trigger()
-        elif button == "tr" or button == "trigger right":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_right_trigger()
-        elif button == "up":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_control_stick_up()
-        elif button == "down":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_control_stick_down()
-        elif button == "left":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_control_stick_left()
-        elif button == "right":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_control_stick_right()
-        if button == "start":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_start()
-        elif button == "cup":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_c_stick_up()
-        elif button == "cdown":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_c_stick_down()
-        elif button == "cleft":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_c_stick_left()
-        elif button == "cright":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_c_stick_right()
-        elif button == "dup":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_dpad_up()
-        elif button == "ddown":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_dpad_down()
-        elif button == "dleft":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_dpad_left()
-        elif button == "dright":
-            for ctr in self.controllers.values():
-                if ctr.channel.id == msg.channel.id:
-                    ctr.push_dpad_left()
+        for ctr in self.controllers.values():
+            if ctr.channel.id == msg.channel.id:
+                ctr.perform_action(msg.content.lower())
 
     @commands.is_owner()
     @commands.command()
