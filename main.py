@@ -53,6 +53,11 @@ class MainBot(commands.Cog):
         self.controllers = {}
 
     @commands.Cog.listener()
+    async def on_shutdown(self):
+        for ctr in self.controllers:
+            await ctr.close()
+
+    @commands.Cog.listener()
     async def on_message(self, msg:discord.Message):
         """Perform actions when a message is received
 
