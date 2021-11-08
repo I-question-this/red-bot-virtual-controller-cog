@@ -9,7 +9,7 @@ from redbot.core import checks, commands, Config
 from redbot.core.data_manager import cog_data_path
 from redbot.core.bot import Red
 
-from .controller import GameCubeController
+from .controller import GameCubeController, ACTIONS
 from .version import __version__, Version
 
 
@@ -18,40 +18,6 @@ _DEFAULT_GLOBAL = {}
 _DEFAULT_GUILD = {}
 
 class ChannelController(GameCubeController):
-    ACTIONS = {
-            "a": (GameCubeController.push_a, 0.25),
-            "hold a": (GameCubeController.push_a, 1.0),
-            "b": (GameCubeController.push_b, 0.25),
-            "x": (GameCubeController.push_x, 0.25),
-            "y": (GameCubeController.push_y, 0.25),
-            "z": (GameCubeController.push_z, 0.25),
-            "l": (GameCubeController.push_left_trigger, 0.25),
-            "r": (GameCubeController.push_right_trigger, 0.25),
-            "start": (GameCubeController.push_start, 0.25),
-            "up": (GameCubeController.push_control_stick_up, 0.25),
-            "down": (GameCubeController.push_control_stick_down, 0.25),
-            "left": (GameCubeController.push_control_stick_left, 0.25),
-            "right": (GameCubeController.push_control_stick_right, 0.25),
-            "hold up": (GameCubeController.push_control_stick_up, 1.0),
-            "hold down": (GameCubeController.push_control_stick_down, 1.0),
-            "hold left": (GameCubeController.push_control_stick_left, 1.0),
-            "hold right": (GameCubeController.push_control_stick_right, 1.0),
-            "ground pound": (GameCubeController.macro_ground_pound, 0.25),
-            "cup": (GameCubeController.push_c_stick_up, 0.25),
-            "cdown": (GameCubeController.push_c_stick_down, 0.25),
-            "cleft": (GameCubeController.push_c_stick_left, 0.25),
-            "cright": (GameCubeController.push_c_stick_right, 0.25),
-            "hold cup": (GameCubeController.push_c_stick_up, 1.0),
-            "hold cdown": (GameCubeController.push_c_stick_down, 1.0),
-            "hold cleft": (GameCubeController.push_c_stick_left, 1.0),
-            "hold cright": (GameCubeController.push_c_stick_right, 1.0),
-            "dup": (GameCubeController.push_dpad_up, 0.25),
-            "ddown": (GameCubeController.push_dpad_down, 0.25),
-            "dright": (GameCubeController.push_dpad_right, 0.25),
-            "dleft": (GameCubeController.push_dpad_left, 0.25),
-        }
-
-
     def __init__(self, channel:discord.TextChannel, clone_parent:str,
                        controller_name:str=None):
         super().__init__(clone_parent, controller_name)
@@ -74,7 +40,7 @@ class ChannelController(GameCubeController):
         return member in self.members
 
     def perform_action(self, button:str):
-        selection = self.ACTIONS.get(button)
+        selection = ACTIONS.get(button)
         if selection is not None:
             selection[0](self, selection[1])
 

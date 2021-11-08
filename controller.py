@@ -8,6 +8,8 @@ import argparse
 import evdev
 import json
 import os
+import random
+random.seed()
 import sys
 import time
 from typing import List
@@ -279,6 +281,40 @@ class GameCubeController():
         self.push_a(seconds)
 
 
+ACTIONS = {
+        "a": (GameCubeController.push_a, 0.25),
+        "hold a": (GameCubeController.push_a, 1.0),
+        "b": (GameCubeController.push_b, 0.25),
+        "x": (GameCubeController.push_x, 0.25),
+        "y": (GameCubeController.push_y, 0.25),
+        "z": (GameCubeController.push_z, 0.25),
+        "l": (GameCubeController.push_left_trigger, 0.25),
+        "r": (GameCubeController.push_right_trigger, 0.25),
+        "start": (GameCubeController.push_start, 0.25),
+        "up": (GameCubeController.push_control_stick_up, 0.25),
+        "down": (GameCubeController.push_control_stick_down, 0.25),
+        "left": (GameCubeController.push_control_stick_left, 0.25),
+        "right": (GameCubeController.push_control_stick_right, 0.25),
+        "hold up": (GameCubeController.push_control_stick_up, 1.0),
+        "hold down": (GameCubeController.push_control_stick_down, 1.0),
+        "hold left": (GameCubeController.push_control_stick_left, 1.0),
+        "hold right": (GameCubeController.push_control_stick_right, 1.0),
+        "ground pound": (GameCubeController.macro_ground_pound, 0.25),
+        "cup": (GameCubeController.push_c_stick_up, 0.25),
+        "cdown": (GameCubeController.push_c_stick_down, 0.25),
+        "cleft": (GameCubeController.push_c_stick_left, 0.25),
+        "cright": (GameCubeController.push_c_stick_right, 0.25),
+        "hold cup": (GameCubeController.push_c_stick_up, 1.0),
+        "hold cdown": (GameCubeController.push_c_stick_down, 1.0),
+        "hold cleft": (GameCubeController.push_c_stick_left, 1.0),
+        "hold cright": (GameCubeController.push_c_stick_right, 1.0),
+        "dup": (GameCubeController.push_dpad_up, 0.25),
+        "ddown": (GameCubeController.push_dpad_down, 0.25),
+        "dright": (GameCubeController.push_dpad_right, 0.25),
+        "dleft": (GameCubeController.push_dpad_left, 0.25),
+    }
+
+
 def parse_arguments(args=None) -> None:
     """Returns the parsed arguments.
     Parameters
@@ -310,25 +346,24 @@ def main(clone_parent:str, controller_name:str=None) -> None:
     FileNotFoundError
         Means that the input file was not found.
     """
+    if controller_name is None:
+        controller_name = "RANDOM"
 
     GC = GameCubeController(clone_parent, controller_name)
 
-    option = None
-    while(option != "q"):
-        option = input("Push a button: ")
-        buttons = []
-        for b in option.split():
-            try:
-                buttons.append(evdev.ecodes.ecodes[b])
-            except:
-                print(f"{b} is not a button")
-        if len(buttons) > 0:
-            wait_time = 3
-            print(f"Waiting {wait_time} seconds")
-            time.sleep(wait_time)
-            GC.push_buttons(buttons, 0.25)
-            print(f"Pressed {buttons}")
-
+    while(True):
+        # Wait 0.25 seconds between button presses
+        time.sleep(0.25)
+        # Press a lot of the time
+        if random.randint(1,100)  <= 40:
+            GC.push_a()
+        else:
+            button = "start"
+            while(button == "start"):
+                button = random.choice(list(ACTIONS.keys()))
+            selection = ACTIONS[button]
+            if selection is not None:
+                selection[0](GC, selection[1])
     GC.close()
 
     return None
