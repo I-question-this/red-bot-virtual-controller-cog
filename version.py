@@ -70,5 +70,5 @@ class Version:
                 )
 
 
-# The version for DadBot
-__version__ = Version(0,0,0)
+# The version for Controllers
+__version__ = Version(1,0,0)
