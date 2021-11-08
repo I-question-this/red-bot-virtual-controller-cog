@@ -155,8 +155,8 @@ class MainBot(commands.Cog):
             controller_number:int):
         controller = self.controllers.get(controller_number)
         if controller is None:
-            await ctx.send(f"No such controller. Existing controllers are: "
-                           f"{self.controllers.keys()}")
+            await ctx.send(f"No such controller. Existing controllers are: ")
+            await self.list_controllers(ctx)
             return
        
         await controller.close()
@@ -179,8 +179,8 @@ class MainBot(commands.Cog):
 
         ctr = self.controllers.get(controller_number)
         if ctr is None:
-            await ctx.send(f"No such controller. Existing controllers are: "
-                           f"{self.controllers.keys()}")
+            await ctx.send(f"No such controller. Existing controllers are: ")
+            await self.list_controllers(ctx)
             return
       
         ctr.members.add(ctx.author)
@@ -216,11 +216,14 @@ class MainBot(commands.Cog):
 
     @commands.command()
     async def list_controllers(self, ctx:commands.Context):
-        def format_controller(ctr_id):
-            return f"{ctr_id} -- {self.controllers[ctr_id].ui.name}"
-        formatted_ctrs = [format_controller(ctr_id) for ctr_id in 
-                          self.controllers.keys()]
-        await ctx.send(f"{formatted_ctrs}")
+        formatted_controllers = "Controllers:\n"
+        for ctr_id in self.controllers.keys():
+            formatted_controllers += f"{ctr_id} -- "
+            formatted_controllers += f"{self.controllers[ctr_id].ui.name}\n"
+            for member in self.controllers[ctr_id].members:
+                formatted_controllers += f"   - {member.mention}\n"
+
+        await ctx.send(formatted_controllers)
 
     @commands.is_owner()
     @commands.command()
