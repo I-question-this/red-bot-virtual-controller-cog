@@ -22,6 +22,7 @@ class ChannelController(GameCubeController):
                        controller_name:str=None):
         super().__init__(clone_parent, controller_name)
         self.channel = channel
+        self.members = set()
 
     async def ready_message(self):
         await self.channel.send(f"{self.ui.name}: READY")
@@ -29,6 +30,13 @@ class ChannelController(GameCubeController):
     async def close(self):
         super().close()
         await self.channel.send(f"{self.ui.name}: CLOSED")
+
+    def channel_and_member_check(self, channel:discord.TextChannel,
+            member: discord.Member):
+        if self.channel.id != channel.id:
+            return False
+
+        return member in self.members
 
     def perform_action(self, button:str):
         if button == "a":
@@ -120,27 +128,94 @@ class MainBot(commands.Cog):
 
         # Interpret message
         for ctr in self.controllers.values():
-            if ctr.channel.id == msg.channel.id:
+            if ctr.channel_and_member_check(msg.channel, msg.author):
                 ctr.perform_action(msg.content.lower())
 
     @commands.is_owner()
     @commands.command()
     async def create_controller(self, ctx:commands.Context, clone_parent:str):
-        controller_name = f"DiscordController{len(self.controllers)}"
-        self.controllers[controller_name] = ChannelController(
+        if len(self.controllers) == 0:
+            controller_number = 0
+        else:
+            controller_number = max(self.controllers.keys()) + 1
+
+        controller_name = f"DiscordController{controller_number}"
+        self.controllers[controller_number] = ChannelController(
                 ctx.channel, clone_parent, controller_name)
-        await self.controllers[controller_name].ready_message()
+        await self.controllers[controller_number].ready_message()
 
     @commands.is_owner()
     @commands.command()
-    async def close_controller(self, ctx:commands.Context, controller_name:str):
-        controller = self.controllers.get(controller_name)
+    async def close_controller(self, ctx:commands.Context, 
+            controller_number:int):
+        controller = self.controllers.get(controller_number)
         if controller is None:
             await ctx.send(f"No such controller. Existing controllers are: "
                            f"{self.controllers.keys()}")
             return
        
         await controller.close()
+        del self.controllers[controller_number]
+
+    @commands.is_owner()
+    @commands.command()
+    async def close_all_controllers(self, ctx:commands.Context):
+        for ctr in self.controllers.values():
+            await ctr.close()
+        # Delete entire list
+        self.controllers = {}
+
+    @commands.command()
+    async def sign_up_for_controller(self, ctx:commands.Context, 
+            controller_number:int):
+        for ctr_id in self.controllers.keys():
+            if ctx.author in self.controllers[ctr_id].members:
+                await self.unsign_up_for_controller(ctx, ctr_id)
+
+        ctr = self.controllers.get(controller_number)
+        if ctr is None:
+            await ctx.send(f"No such controller. Existing controllers are: "
+                           f"{self.ctr.keys()}")
+            return
+      
+        ctr.members.add(ctx.author)
+        await ctx.send(f"{ctx.author.mention} is signed up for "
+                       f"{controller_number}")
+        
+    @commands.is_owner()
+    @commands.command()
+    async def sign_up_member_for_controller(self, ctx:commands.Context, 
+            controller_number:int, member:discord.Member):
+        ctx.author = member
+        await self.sign_up_for_controller(ctx, controller_number)
+
+    @commands.command()
+    async def unsign_up_for_controller(self, ctx:commands.Context,
+            controller_number:int):
+        for ctr in self.controllers.values():
+            if ctx.author in ctr.members:
+                ctr.members.remove(ctx.author)
+                await ctx.send(f"Unsigned up {ctx.author.mention} from "
+                               f"{controller_number}")
+                return
+
+        await ctx.send(f"{ctx.author.mention} was not signed up for any "
+                        "controller")
+
+    @commands.is_owner()
+    @commands.command()
+    async def unsign_up_member_for_controller(self, ctx:commands.Context, 
+            controller_number:int, member:discord.Member):
+        ctx.author = member
+        await self.unsign_up_for_controller(ctx, controller_number)
+
+    @commands.command()
+    async def list_controllers(self, ctx:commands.Context):
+        def format_controller(ctr_id):
+            return f"{ctr_id} -- {self.controllers[ctr_id].ui.name}"
+        formatted_ctrs = [format_controller(ctr_id) for ctr_id in 
+                          self.controllers.keys()]
+        await ctx.send(f"{formatted_ctrs}")
 
     @commands.is_owner()
     @commands.command()
