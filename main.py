@@ -18,11 +18,45 @@ _DEFAULT_GLOBAL = {}
 _DEFAULT_GUILD = {}
 
 class ChannelController(GameCubeController):
+    ACTIONS = {
+            "a": (GameCubeController.push_a, 0.25),
+            "b": (GameCubeController.push_b, 0.25),
+            "x": (GameCubeController.push_x, 0.25),
+            "y": (GameCubeController.push_y, 0.25),
+            "z": (GameCubeController.push_z, 0.25),
+            "l": (GameCubeController.push_left_trigger, 0.25),
+            "r": (GameCubeController.push_right_trigger, 0.25),
+            "start": (GameCubeController.push_start, 0.25),
+            "up": (GameCubeController.push_control_stick_up, 0.25),
+            "down": (GameCubeController.push_control_stick_down, 0.25),
+            "left": (GameCubeController.push_control_stick_left, 0.25),
+            "right": (GameCubeController.push_control_stick_right, 0.25),
+            "hup": (GameCubeController.push_control_stick_up, 1.0),
+            "hdown": (GameCubeController.push_control_stick_down, 1.0),
+            "hleft": (GameCubeController.push_control_stick_left, 1.0),
+            "hright": (GameCubeController.push_control_stick_right, 1.0),
+            "ground pound": (GameCubeController.macro_ground_pound, 0.25),
+            "cup": (GameCubeController.push_c_stick_up, 0.25),
+            "cdown": (GameCubeController.push_c_stick_down, 0.25),
+            "cleft": (GameCubeController.push_c_stick_left, 0.25),
+            "cright": (GameCubeController.push_c_stick_right, 0.25),
+            "hcup": (GameCubeController.push_c_stick_up, 1.0),
+            "hcdown": (GameCubeController.push_c_stick_down, 1.0),
+            "hcleft": (GameCubeController.push_c_stick_left, 1.0),
+            "hcright": (GameCubeController.push_c_stick_right, 1.0),
+            "dup": (GameCubeController.push_dpad_up, 0.25),
+            "ddown": (GameCubeController.push_dpad_down, 0.25),
+            "dright": (GameCubeController.push_dpad_right, 0.25),
+            "dleft": (GameCubeController.push_dpad_left, 0.25),
+        }
+
+
     def __init__(self, channel:discord.TextChannel, clone_parent:str,
                        controller_name:str=None):
         super().__init__(clone_parent, controller_name)
         self.channel = channel
         self.members = set()
+
 
     async def ready_message(self):
         await self.channel.send(f"{self.ui.name}: READY")
@@ -39,49 +73,9 @@ class ChannelController(GameCubeController):
         return member in self.members
 
     def perform_action(self, button:str):
-        if button == "a":
-            self.push_a()
-        elif button == "b":
-            self.push_b()
-        elif button == "x":
-            self.push_x()
-        elif button == "y":
-            self.push_y()
-        elif button == "z":
-            self.push_z()
-        elif button == "l":
-            self.push_left_trigger()
-        elif button == "r":
-            self.push_right_trigger()
-        elif button == "up":
-            self.push_control_stick_up()
-        elif button == "down":
-            self.push_control_stick_down()
-        elif button == "left":
-            self.push_control_stick_left()
-        elif button == "right":
-            self.push_control_stick_right()
-        elif button == "start":
-            self.push_start()
-        elif button == "ground pound":
-            self.macro_ground_pound()
-        elif button == "cup":
-            self.push_c_stick_up()
-        elif button == "cdown":
-            self.push_c_stick_down()
-        elif button == "cleft":
-            self.push_c_stick_left()
-        elif button == "cright":
-            self.push_c_stick_right()
-        elif button == "dup":
-            self.push_dpad_up()
-        elif button == "ddown":
-            self.push_dpad_down()
-        elif button == "dleft":
-            self.push_dpad_left()
-        elif button == "dright":
-            self.push_dpad_left()
-
+        selection = self.ACTIONS.get(button)
+        if selection is not None:
+            selection[0](self, selection[1])
 
 class MainBot(commands.Cog):
     def __init__(self, bot:Red):
@@ -230,9 +224,7 @@ class MainBot(commands.Cog):
     @commands.command()
     async def list_actions(self, ctx:commands.Context):
         actions = "Available Actions:\n"
-        actions += "a, b, x, y, z, l, r, up, down, left, right, "
-        actions += "dup, ddown, dleft, dright, cup, cdown, cleft, cright, "
-        actions += "ground pound"
+        actions += ", ".join(ChannelController.ACTIONS.keys())
         await ctx.send(actions)
 
     @commands.is_owner()
