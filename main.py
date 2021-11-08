@@ -23,6 +23,7 @@ class ChannelController(GameCubeController):
         super().__init__(clone_parent, controller_name)
         self.channel = channel
         self.members = set()
+        self.members_who_pushed = set()
 
 
     async def ready_message(self):
@@ -39,9 +40,21 @@ class ChannelController(GameCubeController):
 
         return member in self.members
 
-    def perform_action(self, button:str):
+    def perform_action(self, member:discord.Member, button:str):
+        # Check if member press list is full
+        if self.members == self.members_who_pushed:
+            # All have pushed, reset list
+            self.members_who_pushed = set()
+
+        # Check if member has already pressed a button since reset
+        if member in self.members_who_pushed:
+            return
+
+        # Push button
         selection = ACTIONS.get(button)
         if selection is not None:
+            # Add member to pressed list
+            self.members_who_pushed.add(member)
             selection[0](self, selection[1])
 
 class MainBot(commands.Cog):
@@ -98,7 +111,7 @@ class MainBot(commands.Cog):
         # Interpret message
         for ctr in self.controllers.values():
             if ctr.channel_and_member_check(msg.channel, msg.author):
-                ctr.perform_action(msg.content.lower())
+                ctr.perform_action(msg.author, msg.content.lower())
 
     @commands.is_owner()
     @commands.command()
