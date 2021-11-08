@@ -266,6 +266,13 @@ class GameCubeController():
         """
         self.push_sticks([evdev.ecodes.ABS_RX], [255], seconds)
 
+    # Macros
+    def macro_ground_pound(self):
+        """Perform a ground pound via pushing a twice quickly.
+        """
+        self.push_a()
+        self.push_a()
+
 
 def parse_arguments(args=None) -> None:
     """Returns the parsed arguments.

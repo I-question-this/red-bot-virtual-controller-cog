@@ -61,8 +61,10 @@ class ChannelController(GameCubeController):
             self.push_control_stick_left()
         elif button == "right":
             self.push_control_stick_right()
-        if button == "start":
+        elif button == "start":
             self.push_start()
+        elif button == "ground pound":
+            self.macro_ground_pound()
         elif button == "cup":
             self.push_c_stick_up()
         elif button == "cdown":
@@ -229,7 +231,8 @@ class MainBot(commands.Cog):
     async def list_actions(self, ctx:commands.Context):
         actions = "Available Actions:\n"
         actions += "a, b, x, y, z, l, r, up, down, left, right, "
-        actions += "dup, ddown, dleft, dright, cup, cdown, cleft, cright"
+        actions += "dup, ddown, dleft, dright, cup, cdown, cleft, cright, "
+        actions += "ground pound"
         await ctx.send(actions)
 
     @commands.is_owner()
