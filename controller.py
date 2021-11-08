@@ -280,10 +280,21 @@ class GameCubeController():
         time.sleep(seconds)
         self.push_a(seconds)
 
+    def macro_ab(self, seconds:float=0.25):
+        """Push a and b at the same time.
+        Parameters
+        ----------
+        seconds: float = 0.25
+            Seconds to hold the button down for
+        """
+        self.push_buttons(
+                [evdev.ecodes.BTN_SOUTH, evdev.ecodes.BTN_EAST], seconds)
+
 
 ACTIONS = {
         "a": (GameCubeController.push_a, 0.25),
         "hold a": (GameCubeController.push_a, 1.0),
+        "ab": (GameCubeController.macro_ab, 0.25),
         "b": (GameCubeController.push_b, 0.25),
         "x": (GameCubeController.push_x, 0.25),
         "y": (GameCubeController.push_y, 0.25),
