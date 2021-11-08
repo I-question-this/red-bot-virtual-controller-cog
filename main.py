@@ -65,6 +65,7 @@ class MainBot(commands.Cog):
         self._conf.register_guild(**_DEFAULT_GUILD)
         self.controllers = {}
         self.quiet = False
+        self.locked = False
 
     @commands.Cog.listener()
     async def on_shutdown(self):
@@ -136,6 +137,10 @@ class MainBot(commands.Cog):
     @commands.command()
     async def sign_up_for_controller(self, ctx:commands.Context, 
             controller_number:int):
+        if self.locked:
+            await ctx.send(f"Controller sign up is currently locked.")
+            return
+
         for ctr_id in self.controllers.keys():
             if ctx.author in self.controllers[ctr_id].members:
                 await self.unsign_up_for_controller(ctx, ctr_id)
@@ -155,11 +160,21 @@ class MainBot(commands.Cog):
     async def sign_up_member_for_controller(self, ctx:commands.Context, 
             controller_number:int, member:discord.Member):
         ctx.author = member
+        # Hack for getting around lock as owner
+        # Would be dangerous if this were important for things other than
+        # anti-griefing
+        locked_status = self.locked
+        self.locked = False
         await self.sign_up_for_controller(ctx, controller_number)
+        self.locked = locked_status
 
     @commands.command()
     async def unsign_up_for_controller(self, ctx:commands.Context,
             controller_number:int):
+        if self.locked:
+            await ctx.send(f"Controller sign up is currently locked.")
+            return
+
         for ctr in self.controllers.values():
             if ctx.author in ctr.members:
                 ctr.members.remove(ctx.author)
@@ -175,7 +190,13 @@ class MainBot(commands.Cog):
     async def unsign_up_member_for_controller(self, ctx:commands.Context, 
             controller_number:int, member:discord.Member):
         ctx.author = member
+        # Hack for getting around lock as owner
+        # Would be dangerous if this were important for things other than
+        # anti-griefing
+        locked_status = self.locked
+        self.locked = False
         await self.unsign_up_for_controller(ctx, controller_number)
+        self.locked = locked_status
 
     @commands.command()
     async def list_controllers(self, ctx:commands.Context):
@@ -204,3 +225,9 @@ class MainBot(commands.Cog):
     async def toggle_controller_quiet(self, ctx:commands.Context):
         self.quiet = not self.quiet
         await ctx.send(f"Controllers Quiet set to: {self.quiet}")
+
+    @commands.is_owner()
+    @commands.command()
+    async def toggle_sign_up_lock(self, ctx:commands.Context):
+        self.locked = not self.locked
+        await ctx.send(f"Controller Sign Up Lock set to: {self.locked}")
