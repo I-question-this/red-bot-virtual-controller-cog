@@ -101,6 +101,7 @@ class MainBot(commands.Cog):
         self._conf.register_global(**_DEFAULT_GLOBAL)
         self._conf.register_guild(**_DEFAULT_GUILD)
         self.controllers = {}
+        self.quiet = False
 
     @commands.Cog.listener()
     async def on_shutdown(self):
@@ -124,6 +125,10 @@ class MainBot(commands.Cog):
         if not isinstance(msg.author, discord.Member) or msg.author.bot:
             return
         if await self.bot.is_automod_immune(msg):
+            return
+
+        # Check if controllers are set to quiet
+        if self.quiet:
             return
 
         # Interpret message
@@ -175,7 +180,7 @@ class MainBot(commands.Cog):
         ctr = self.controllers.get(controller_number)
         if ctr is None:
             await ctx.send(f"No such controller. Existing controllers are: "
-                           f"{self.ctr.keys()}")
+                           f"{self.controllers.keys()}")
             return
       
         ctr.members.add(ctx.author)
@@ -221,3 +226,9 @@ class MainBot(commands.Cog):
     @commands.command()
     async def list_evdev_devices(self, ctx:commands.Context):
         await ctx.send(f"{evdev.util.list_devices()}")
+
+    @commands.is_owner()
+    @commands.command()
+    async def toggle_controller_quiet(self, ctx:commands.Context):
+        self.quiet = not self.quiet
+        await ctx.send(f"Controllers Quiet set to: {self.quiet}")
