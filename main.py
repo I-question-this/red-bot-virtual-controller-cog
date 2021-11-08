@@ -49,9 +49,9 @@ class ChannelController(GameCubeController):
             self.push_y()
         elif button == "z":
             self.push_z()
-        elif button == "tl" or button == "trigger left":
+        elif button == "l":
             self.push_left_trigger()
-        elif button == "tr" or button == "trigger right":
+        elif button == "r":
             self.push_right_trigger()
         elif button == "up":
             self.push_control_stick_up()
@@ -224,6 +224,13 @@ class MainBot(commands.Cog):
                 formatted_controllers += f"   - {member.mention}\n"
 
         await ctx.send(formatted_controllers)
+
+    @commands.command()
+    async def list_actions(self, ctx:commands.Context):
+        actions = "Available Actions:\n"
+        actions += "a, b, x, y, z, l, r, up, down, left, right, "
+        actions += "dup, ddown, dleft, dright, cup, cdown, cleft, cright"
+        await ctx.send(actions)
 
     @commands.is_owner()
     @commands.command()
