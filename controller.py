@@ -25,13 +25,13 @@ class GameCubeController():
     def close(self):
         self.ui.close()
 
-    def push_buttons(self, buttons:List[int], seconds:float=0.5) -> None:
+    def push_buttons(self, buttons:List[int], seconds:float=0.25) -> None:
         """Push button for specified time
         Parameters
         ----------
         button: List[int] (evdev.ecodes)
             Buttons to push down, and then lift up
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         # Push the buttons down
@@ -51,7 +51,7 @@ class GameCubeController():
         # Synchronize the lifts
         self.ui.syn()
 
-    def push_sticks(self, sticks:List[int], values:List[int], seconds:float=0.5)\
+    def push_sticks(self, sticks:List[int], values:List[int], seconds:float=0.25)\
             -> None:
         """Push button for specified time
         Parameters
@@ -60,7 +60,7 @@ class GameCubeController():
             Sticks to manipulate, and then reset.
         values: List[int] 
             Values to set the sticks to. Should be the same size as sticks
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         # Push the sticks down
@@ -82,186 +82,186 @@ class GameCubeController():
         self.ui.syn()
 
     # Start button
-    def push_start(self, seconds:float=0.5):
+    def push_start(self, seconds:float=0.25):
         """Push Start button for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_buttons([evdev.ecodes.BTN_START], seconds)
 
     # Right thumb buttons
-    def push_a(self, seconds:float=0.5):
+    def push_a(self, seconds:float=0.25):
         """Push A button for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_buttons([evdev.ecodes.BTN_SOUTH], seconds)
 
-    def push_b(self, seconds:float=0.5):
+    def push_b(self, seconds:float=0.25):
         """Push B button for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_buttons([evdev.ecodes.BTN_EAST], seconds)
 
-    def push_x(self, seconds:float=0.5):
+    def push_x(self, seconds:float=0.25):
         """Push X button for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_buttons([evdev.ecodes.BTN_NORTH], seconds)
 
-    def push_y(self, seconds:float=0.5):
+    def push_y(self, seconds:float=0.25):
         """Push Y button for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_buttons([evdev.ecodes.BTN_WEST], seconds)
 
     # Trigger buttons
-    def push_z(self, seconds:float=0.5):
+    def push_z(self, seconds:float=0.25):
         """Push Z button for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_buttons([evdev.ecodes.BTN_TR], seconds)
 
-    def push_left_trigger(self, seconds:float=0.5):
+    def push_left_trigger(self, seconds:float=0.25):
         """Push left trigger for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_buttons([evdev.ecodes.BTN_TL2], seconds)
 
-    def push_right_trigger(self, seconds:float=0.5):
+    def push_right_trigger(self, seconds:float=0.25):
         """Push right trigger for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_buttons([evdev.ecodes.BTN_TR2], seconds)
 
     # DPAD
-    def push_dpad_up(self, seconds:float=0.5):
+    def push_dpad_up(self, seconds:float=0.25):
         """Push DPad up for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_buttons([evdev.ecodes.BTN_DPAD_UP], seconds)
 
-    def push_dpad_down(self, seconds:float=0.5):
+    def push_dpad_down(self, seconds:float=0.25):
         """Push DPad down for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_buttons([evdev.ecodes.BTN_DPAD_DOWN], seconds)
 
-    def push_dpad_left(self, seconds:float=0.5):
+    def push_dpad_left(self, seconds:float=0.25):
         """Push DPad left for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_buttons([evdev.ecodes.BTN_DPAD_LEFT], seconds)
 
-    def push_dpad_right(self, seconds:float=0.5):
+    def push_dpad_right(self, seconds:float=0.25):
         """Push DPad right for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_buttons([evdev.ecodes.BTN_DPAD_RIGHT], seconds)
 
     # Control Stick
-    def push_control_stick_up(self, seconds:float=0.5):
+    def push_control_stick_up(self, seconds:float=0.25):
         """Push Control Stick up for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_sticks([evdev.ecodes.ABS_Y], [0], seconds)
 
-    def push_control_stick_down(self, seconds:float=0.5):
+    def push_control_stick_down(self, seconds:float=0.25):
         """Push Control Stick back for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_sticks([evdev.ecodes.ABS_Y], [255], seconds)
 
-    def push_control_stick_left(self, seconds:float=0.5):
+    def push_control_stick_left(self, seconds:float=0.25):
         """Push Control Stick left for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_sticks([evdev.ecodes.ABS_X], [0], seconds)
 
-    def push_control_stick_right(self, seconds:float=0.5):
+    def push_control_stick_right(self, seconds:float=0.25):
         """Push Control Stick right for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_sticks([evdev.ecodes.ABS_X], [255], seconds)
 
     # C Stick
-    def push_c_stick_up(self, seconds:float=0.5):
+    def push_c_stick_up(self, seconds:float=0.25):
         """Push C Stick up for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_sticks([evdev.ecodes.ABS_RY], [0], seconds)
 
-    def push_c_stick_down(self, seconds:float=0.5):
+    def push_c_stick_down(self, seconds:float=0.25):
         """Push C Stick down for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_sticks([evdev.ecodes.ABS_RY], [255], seconds)
 
-    def push_c_stick_left(self, seconds:float=0.5):
+    def push_c_stick_left(self, seconds:float=0.25):
         """Push C Stick left for specified time
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_sticks([evdev.ecodes.ABS_RX], [0], seconds)
 
-    def push_c_stick_right(self, seconds:float=0.5):
+    def push_c_stick_right(self, seconds:float=0.25):
         """Push C Stick right for specified time
         Parameters
         ----------
-        seconds: float = 0.5
+        seconds: float = 0.25
             Seconds to hold the button down for
         """
         self.push_sticks([evdev.ecodes.ABS_RX], [255], seconds)
@@ -321,7 +321,7 @@ def main(clone_parent:str, controller_name:str=None) -> None:
             wait_time = 3
             print(f"Waiting {wait_time} seconds")
             time.sleep(wait_time)
-            GC.push_buttons(buttons, 0.5)
+            GC.push_buttons(buttons, 0.25)
             print(f"Pressed {buttons}")
 
     GC.close()
