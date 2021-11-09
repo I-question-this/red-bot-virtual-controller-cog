@@ -225,7 +225,7 @@ class MainBot(commands.Cog):
     @commands.command()
     async def list_actions(self, ctx:commands.Context):
         actions = "Available Actions:\n"
-        actions += ", ".join(ChannelController.ACTIONS.keys())
+        actions += ", ".join(ACTIONS.keys())
         await ctx.send(actions)
 
     @commands.is_owner()
