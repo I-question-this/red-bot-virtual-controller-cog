@@ -40,9 +40,9 @@ class ChannelController(GameCubeController):
 
         return member in self.members
 
-    def perform_action(self, member:discord.Member, button:str):
-        # Check if member press list is full
-        if self.members == self.members_who_pushed:
+    def perform_action(self, member:discord.Member, actions:str):
+        # Check if at least half the team pushed a button
+        if len(self.members_who_pushed) >= len(self.members):
             # All have pushed, reset list
             self.members_who_pushed = set()
 
@@ -50,12 +50,16 @@ class ChannelController(GameCubeController):
         if member in self.members_who_pushed:
             return
 
+        # Collect valid actions
+        validated_actions = []
+        for action in actions.split(" "):
+            if ACTIONS.get(action) is not None:
+                validated_actions.append(ACTIONS.get(action))
         # Push button
-        selection = ACTIONS.get(button)
-        if selection is not None:
+        if len(validated_actions):
             # Add member to pressed list
             self.members_who_pushed.add(member)
-            selection[0](self, selection[1])
+            self.perform_actions(validated_actions)
 
 class MainBot(commands.Cog):
     def __init__(self, bot:Red):

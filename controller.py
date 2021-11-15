@@ -4,6 +4,7 @@
 __author__="Tyler Westland"
 
 import argparse
+from dataclasses import dataclass, replace
 # https://python-evdev.readthedocs.io/en/latest/index.html
 import evdev
 import json
@@ -13,6 +14,50 @@ random.seed()
 import sys
 import time
 from typing import List
+
+
+@dataclass(frozen=True)
+class Action:
+    etype: int
+    code: int
+    set_value: int
+    reset_value: int
+    seconds: float
+
+# 0 is base, 127 is middle, and 255 max for absolutes axises
+ACTIONS = {
+        "a": Action(evdev.events.EV_KEY, evdev.ecodes.BTN_SOUTH, 1, 0, 0.25),
+        "b": Action(evdev.events.EV_KEY, evdev.ecodes.BTN_EAST, 1, 0, 0.25),
+        "x": Action(evdev.events.EV_KEY, evdev.ecodes.BTN_NORTH, 1, 0, 0.25),
+        "y": Action(evdev.events.EV_KEY, evdev.ecodes.BTN_WEST, 1, 0, 0.25),
+        "z": Action(evdev.events.EV_KEY, evdev.ecodes.BTN_TR, 1, 0, 0.25),
+        "l": Action(evdev.events.EV_KEY, evdev.ecodes.BTN_TL2, 1, 0, 0.25),
+        "r": Action(evdev.events.EV_KEY, evdev.ecodes.BTN_TR2, 1, 0, 0.25),
+        "start": Action(evdev.events.EV_KEY, evdev.ecodes.BTN_START, 1, 0, 0.25),
+        "up": Action(evdev.events.EV_ABS, evdev.ecodes.ABS_Y, 0, 127, 0.25),
+        "down": Action(evdev.events.EV_ABS, evdev.ecodes.ABS_Y, 255, 127, 0.25),
+        "left": Action(evdev.events.EV_ABS, evdev.ecodes.ABS_X, 0, 127, 0.25),
+        "right": Action(evdev.events.EV_ABS, evdev.ecodes.ABS_X, 255, 127, 0.25),
+        "cup": Action(evdev.events.EV_ABS, evdev.ecodes.ABS_RY, 0, 127, 0.25),
+        "cdown": Action(evdev.events.EV_ABS, evdev.ecodes.ABS_RY, 255, 127, 0.25),
+        "cleft": Action(evdev.events.EV_ABS, evdev.ecodes.ABS_RX, 0, 127, 0.25),
+        "cright": Action(evdev.events.EV_ABS, evdev.ecodes.ABS_RX, 255, 127, 0.25),
+        "dup": Action(evdev.events.EV_KEY, evdev.ecodes.BTN_DPAD_UP, 1, 0, 0.25),
+        "ddown": Action(evdev.events.EV_KEY, evdev.ecodes.BTN_DPAD_DOWN, 1, 0, 0.25),
+        "dleft": Action(evdev.events.EV_KEY, evdev.ecodes.BTN_DPAD_LEFT, 1, 0, 0.25),
+        "dright": Action(evdev.events.EV_KEY, evdev.ecodes.BTN_DPAD_RIGHT, 1, 0, 0.25),
+    }
+
+# Create short and long versions
+extensions = {"tiny": 1/8, "short": 1/4, "long": 1.0}
+for adjective in extensions:
+    additions = dict()
+    for action in filter(
+            lambda act: all(ext not in act for ext in extensions), ACTIONS):
+        additions[f"{adjective}_{action}"] = replace(
+                ACTIONS[action], seconds=extensions[adjective])
+    for new_action in additions:
+        ACTIONS[new_action] = additions[new_action]
 
 
 class GameCubeController():
@@ -27,7 +72,7 @@ class GameCubeController():
     def close(self):
         self.ui.close()
 
-    def push_buttons(self, buttons:List[int], seconds:float=0.25) -> None:
+    def perform_actions(self, actions:List[Action]) -> None:
         """Push button for specified time
         Parameters
         ----------
@@ -36,295 +81,27 @@ class GameCubeController():
         seconds: float = 0.25
             Seconds to hold the button down for
         """
-        # Push the buttons down
-        for btn in buttons:
-            self.ui.write(evdev.events.EV_KEY, btn, 1)
+        # FIND MAX SECONDS
+        seconds = max(act.seconds for act in actions)
+        # Activate the actions
+        for act in actions:
+            self.ui.write(act.etype, act.code, act.set_value)
 
-        # Synchronize the pushes
+        # Synchronize the activations
         self.ui.syn()
 
         # Wait
         time.sleep(seconds)
 
-        # Lift the buttons up
-        for btn in buttons:
-            self.ui.write(evdev.events.EV_KEY, btn, 0)
+        # Reset the actions
+        for act in actions:
+            self.ui.write(act.etype, act.code, act.reset_value)
 
         # Synchronize the lifts
         self.ui.syn()
 
-    def push_sticks(self, sticks:List[int], values:List[int], seconds:float=0.25)\
-            -> None:
-        """Push button for specified time
-        Parameters
-        ----------
-        sticks: List[int] (evdev.ecodes)
-            Sticks to manipulate, and then reset.
-        values: List[int] 
-            Values to set the sticks to. Should be the same size as sticks
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        # Push the sticks down
-        for i in range(len(sticks)):
-            self.ui.write(evdev.events.EV_ABS, sticks[i], values[i])
-
-        # Synchronize the pushes
+        # Synchronize the resets
         self.ui.syn()
-
-        # Wait
-        time.sleep(seconds)
-
-        # Move sticks back to center
-        # Since this is intended to clone a PS3 controller that's 127
-        for i in range(len(sticks)):
-            self.ui.write(evdev.events.EV_ABS, sticks[i], 127)
-
-        # Synchronize the lifts
-        self.ui.syn()
-
-    # Start button
-    def push_start(self, seconds:float=0.25):
-        """Push Start button for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_buttons([evdev.ecodes.BTN_START], seconds)
-
-    # Right thumb buttons
-    def push_a(self, seconds:float=0.25):
-        """Push A button for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_buttons([evdev.ecodes.BTN_SOUTH], seconds)
-
-    def push_b(self, seconds:float=0.25):
-        """Push B button for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_buttons([evdev.ecodes.BTN_EAST], seconds)
-
-    def push_x(self, seconds:float=0.25):
-        """Push X button for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_buttons([evdev.ecodes.BTN_NORTH], seconds)
-
-    def push_y(self, seconds:float=0.25):
-        """Push Y button for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_buttons([evdev.ecodes.BTN_WEST], seconds)
-
-    # Trigger buttons
-    def push_z(self, seconds:float=0.25):
-        """Push Z button for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_buttons([evdev.ecodes.BTN_TR], seconds)
-
-    def push_left_trigger(self, seconds:float=0.25):
-        """Push left trigger for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_buttons([evdev.ecodes.BTN_TL2], seconds)
-
-    def push_right_trigger(self, seconds:float=0.25):
-        """Push right trigger for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_buttons([evdev.ecodes.BTN_TR2], seconds)
-
-    # DPAD
-    def push_dpad_up(self, seconds:float=0.25):
-        """Push DPad up for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_buttons([evdev.ecodes.BTN_DPAD_UP], seconds)
-
-    def push_dpad_down(self, seconds:float=0.25):
-        """Push DPad down for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_buttons([evdev.ecodes.BTN_DPAD_DOWN], seconds)
-
-    def push_dpad_left(self, seconds:float=0.25):
-        """Push DPad left for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_buttons([evdev.ecodes.BTN_DPAD_LEFT], seconds)
-
-    def push_dpad_right(self, seconds:float=0.25):
-        """Push DPad right for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_buttons([evdev.ecodes.BTN_DPAD_RIGHT], seconds)
-
-    # Control Stick
-    def push_control_stick_up(self, seconds:float=0.25):
-        """Push Control Stick up for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_sticks([evdev.ecodes.ABS_Y], [0], seconds)
-
-    def push_control_stick_down(self, seconds:float=0.25):
-        """Push Control Stick back for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_sticks([evdev.ecodes.ABS_Y], [255], seconds)
-
-    def push_control_stick_left(self, seconds:float=0.25):
-        """Push Control Stick left for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_sticks([evdev.ecodes.ABS_X], [0], seconds)
-
-    def push_control_stick_right(self, seconds:float=0.25):
-        """Push Control Stick right for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_sticks([evdev.ecodes.ABS_X], [255], seconds)
-
-    # C Stick
-    def push_c_stick_up(self, seconds:float=0.25):
-        """Push C Stick up for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_sticks([evdev.ecodes.ABS_RY], [0], seconds)
-
-    def push_c_stick_down(self, seconds:float=0.25):
-        """Push C Stick down for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_sticks([evdev.ecodes.ABS_RY], [255], seconds)
-
-    def push_c_stick_left(self, seconds:float=0.25):
-        """Push C Stick left for specified time
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_sticks([evdev.ecodes.ABS_RX], [0], seconds)
-
-    def push_c_stick_right(self, seconds:float=0.25):
-        """Push C Stick right for specified time
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_sticks([evdev.ecodes.ABS_RX], [255], seconds)
-
-    # Macros
-    def macro_ground_pound(self, seconds:float=0.25):
-        """Perform a ground pound via pushing a twice quickly.
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_a(seconds)
-        time.sleep(seconds)
-        self.push_a(seconds)
-
-    def macro_ab(self, seconds:float=0.25):
-        """Push a and b at the same time.
-        Parameters
-        ----------
-        seconds: float = 0.25
-            Seconds to hold the button down for
-        """
-        self.push_buttons(
-                [evdev.ecodes.BTN_SOUTH, evdev.ecodes.BTN_EAST], seconds)
-
-
-ACTIONS = {
-        "a": (GameCubeController.push_a, 0.25),
-        "hold a": (GameCubeController.push_a, 1.0),
-        "ab": (GameCubeController.macro_ab, 0.25),
-        "b": (GameCubeController.push_b, 0.25),
-        "x": (GameCubeController.push_x, 0.25),
-        "y": (GameCubeController.push_y, 0.25),
-        "z": (GameCubeController.push_z, 0.25),
-        "l": (GameCubeController.push_left_trigger, 0.25),
-        "r": (GameCubeController.push_right_trigger, 0.25),
-        "start": (GameCubeController.push_start, 0.25),
-        "up": (GameCubeController.push_control_stick_up, 0.25),
-        "down": (GameCubeController.push_control_stick_down, 0.25),
-        "left": (GameCubeController.push_control_stick_left, 0.25),
-        "right": (GameCubeController.push_control_stick_right, 0.25),
-        "hold up": (GameCubeController.push_control_stick_up, 1.0),
-        "hold down": (GameCubeController.push_control_stick_down, 1.0),
-        "hold left": (GameCubeController.push_control_stick_left, 1.0),
-        "hold right": (GameCubeController.push_control_stick_right, 1.0),
-        "ground pound": (GameCubeController.macro_ground_pound, 0.25),
-        "cup": (GameCubeController.push_c_stick_up, 0.25),
-        "cdown": (GameCubeController.push_c_stick_down, 0.25),
-        "cleft": (GameCubeController.push_c_stick_left, 0.25),
-        "cright": (GameCubeController.push_c_stick_right, 0.25),
-        "hold cup": (GameCubeController.push_c_stick_up, 1.0),
-        "hold cdown": (GameCubeController.push_c_stick_down, 1.0),
-        "hold cleft": (GameCubeController.push_c_stick_left, 1.0),
-        "hold cright": (GameCubeController.push_c_stick_right, 1.0),
-        "dup": (GameCubeController.push_dpad_up, 0.25),
-        "ddown": (GameCubeController.push_dpad_down, 0.25),
-        "dright": (GameCubeController.push_dpad_right, 0.25),
-        "dleft": (GameCubeController.push_dpad_left, 0.25),
-    }
-
 
 def parse_arguments(args=None) -> None:
     """Returns the parsed arguments.
@@ -367,14 +144,20 @@ def main(clone_parent:str, controller_name:str=None) -> None:
         time.sleep(0.25)
         # Press a lot of the time
         if random.randint(1,100)  <= 40:
-            GC.push_a()
+            GC.perform_actions([ACTIONS["a"]])
         else:
-            button = "start"
-            while(button == "start"):
-                button = random.choice(list(ACTIONS.keys()))
-            selection = ACTIONS[button]
-            if selection is not None:
-                selection[0](GC, selection[1])
+            def pick_a_action_besides_start():
+                action = "start"
+                while("start" in action):
+                    action = random.choice(list(ACTIONS.keys()))
+                return action
+
+            actions = [ACTIONS[pick_a_action_besides_start()]]
+            # Pick a second action, maybe?
+            if random.choice([True, False]):
+                actions.append(ACTIONS[pick_a_action_besides_start()])
+
+            GC.perform_actions(actions)
     GC.close()
 
     return None

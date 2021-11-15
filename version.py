@@ -71,4 +71,4 @@ class Version:
 
 
 # The version for Controllers
-__version__ = Version(1,2,1)
+__version__ = Version(1,3,0)
