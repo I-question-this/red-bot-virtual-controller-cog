@@ -49,15 +49,14 @@ ACTIONS = {
     }
 
 # Create short and long versions
-extensions = {"tiny": 1/8, "short": 1/4, "long": 1.0}
+extensions = {"t": 1/8, "s": 1/4, "l": 1.0}
+additions = dict()
 for adjective in extensions:
-    additions = dict()
-    for action in filter(
-            lambda act: all(ext not in act for ext in extensions), ACTIONS):
-        additions[f"{adjective}_{action}"] = replace(
+    for action in ACTIONS:
+        additions[f"{adjective}{action}"] = replace(
                 ACTIONS[action], seconds=extensions[adjective])
-    for new_action in additions:
-        ACTIONS[new_action] = additions[new_action]
+for new_action in additions:
+    ACTIONS[new_action] = additions[new_action]
 
 
 class GameCubeController():
