@@ -16,8 +16,9 @@ from .version import __version__, Version
 
 
 LOG = logging.getLogger("red.controller")
-_DEFAULT_GLOBAL = {}
-_DEFAULT_GUILD = {}
+_DEFAULT_GLOBAL = {
+        "max_button_presses": 20
+        }
 
 class ChannelController(GameCubeController):
     def __init__(self, channel:discord.TextChannel, clone_parent:str,
@@ -42,7 +43,8 @@ class ChannelController(GameCubeController):
 
         return member in self.members
 
-    def perform_action(self, member:discord.Member, actions:str):
+    def perform_action(self, member:discord.Member, actions:str,
+            max_button_presses: int):
         # Check if at least half the team pushed a button
         if len(self.members_who_pushed) >= len(self.members):
             # All have pushed, reset list
@@ -55,8 +57,8 @@ class ChannelController(GameCubeController):
         # Collect valid actions
         validated_actions = []
         # Look at all button press, to a limit
-        max_button_presses = max(1, int(20 / len(self.members)))
-        for action in itertools.islice(actions.split(" "), max_button_presses):
+        mbp = max(1, int(max_button_presses / len(self.members)))
+        for action in itertools.islice(actions.split(" "), mbp):
             if ACTIONS.get(action) is not None:
                 act = ACTIONS.get(action)
                 placed = False
@@ -94,7 +96,6 @@ class Controllers(commands.Cog):
                 cog_name=f"{self.__class__.__name__}", force_registration=True
                 )
         self._conf.register_global(**_DEFAULT_GLOBAL)
-        self._conf.register_guild(**_DEFAULT_GUILD)
         self.controllers = {}
         self.quiet = False
         self.locked = False
@@ -130,7 +131,20 @@ class Controllers(commands.Cog):
         # Interpret message
         for ctr in self.controllers.values():
             if ctr.channel_and_member_check(msg.channel, msg.author):
-                ctr.perform_action(msg.author, msg.content.lower())
+                ctr.perform_action(msg.author, msg.content.lower(),
+                        await self._conf.max_button_presses())
+
+    @commands.is_owner()
+    @commands.command()
+    async def max_button_presses(self, ctx:commands.Context, new_max: int=None):
+        """Displays or sets the max button press for people.
+        Remember that the actual number is `max_button_presses/len(team_size)`
+        """
+        if new_max is not None:
+            await self._conf.max_button_presses.set(new_max)
+
+        await ctx.send(
+            f"max_button_press: {await self._conf.max_button_presses()}")
 
     @commands.is_owner()
     @commands.command()
