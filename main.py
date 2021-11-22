@@ -1,9 +1,11 @@
 import evdev
 import discord
 from discord.ext import tasks
+import itertools
 import logging
 import re
 from requests.exceptions import RequestException
+import time
 
 from redbot.core import checks, commands, Config
 from redbot.core.data_manager import cog_data_path
@@ -52,14 +54,27 @@ class ChannelController(GameCubeController):
 
         # Collect valid actions
         validated_actions = []
-        for action in actions.split(" "):
+        # Look at all button press, to a limit
+        max_button_presses = max(1, int(20 / len(self.members)))
+        for action in itertools.islice(actions.split(" "), max_button_presses):
             if ACTIONS.get(action) is not None:
-                validated_actions.append(ACTIONS.get(action))
+                act = ACTIONS.get(action)
+                placed = False
+                for i in range(len(validated_actions)):
+                    if not act in validated_actions[i]:
+                        placed = True
+                        validated_actions[i].append(act)
+                        break
+                if not placed:
+                    validated_actions.append([act])
+
         # Push button
-        if len(validated_actions):
+        if len(validated_actions) > 0:
             # Add member to pressed list
             self.members_who_pushed.add(member)
-            self.perform_actions(validated_actions)
+            for action_set in validated_actions:
+                self.perform_actions(action_set)
+                time.sleep(1/8)
 
 class MainBot(commands.Cog):
     def __init__(self, bot:Red):
