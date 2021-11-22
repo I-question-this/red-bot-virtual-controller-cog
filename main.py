@@ -76,7 +76,7 @@ class ChannelController(GameCubeController):
                 self.perform_actions(action_set)
                 time.sleep(1/8)
 
-class MainBot(commands.Cog):
+class Controllers(commands.Cog):
     def __init__(self, bot:Red):
         """Init for the controller cog
 

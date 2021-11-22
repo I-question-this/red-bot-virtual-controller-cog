@@ -1,4 +1,4 @@
 # Set up Dad bot
-from .main import MainBot
+from .main import Controllers
 def setup(bot):
-    bot.add_cog(MainBot(bot))
+    bot.add_cog(Controllers(bot))
