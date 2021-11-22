@@ -17,7 +17,8 @@ from .version import __version__, Version
 
 LOG = logging.getLogger("red.controller")
 _DEFAULT_GLOBAL = {
-        "max_button_presses": 20
+        "max_button_presses": 20,
+        "min_participation": 0.5
         }
 
 class ChannelController(GameCubeController):
@@ -44,9 +45,10 @@ class ChannelController(GameCubeController):
         return member in self.members
 
     def perform_action(self, member:discord.Member, actions:str,
-            max_button_presses: int):
+            max_button_presses: int, min_participation: float):
         # Check if at least half the team pushed a button
-        if len(self.members_who_pushed) >= len(self.members):
+        if len(self.members_who_pushed)/len(self.members) >=\
+                min_participation:
             # All have pushed, reset list
             self.members_who_pushed = set()
 
@@ -132,7 +134,8 @@ class Controllers(commands.Cog):
         for ctr in self.controllers.values():
             if ctr.channel_and_member_check(msg.channel, msg.author):
                 ctr.perform_action(msg.author, msg.content.lower(),
-                        await self._conf.max_button_presses())
+                        await self._conf.max_button_presses(),
+                        await self._conf.min_participation())
 
     @commands.is_owner()
     @commands.command()
@@ -145,6 +148,20 @@ class Controllers(commands.Cog):
 
         await ctx.send(
             f"max_button_press: {await self._conf.max_button_presses()}")
+
+    @commands.is_owner()
+    @commands.command()
+    async def minimum_participation(self, ctx:commands.Context, 
+            new_min: float=None):
+        """Displays or sets the minimum percentage of participation from a team.
+        Value will be cast to range of [0,1].
+        """
+        if new_min is not None:
+            await self._conf.min_participation.set(
+                    min(1, max(0, new_min)))
+
+        await ctx.send(
+            f"minimum_participation: {await self._conf.min_participation()}")
 
     @commands.is_owner()
     @commands.command()
