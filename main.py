@@ -11,7 +11,9 @@ from redbot.core import checks, commands, Config
 from redbot.core.data_manager import cog_data_path
 from redbot.core.bot import Red
 
-from .controller import GameCubeController, ACTIONS
+from .controller import ACTIONS
+from .channel_controller import ChannelController
+from .random_channel_controller import RandomChannelController
 from .version import __version__, Version
 
 
@@ -20,65 +22,6 @@ _DEFAULT_GLOBAL = {
         "max_button_presses": 20,
         "min_participation": 0.5
         }
-
-class ChannelController(GameCubeController):
-    def __init__(self, channel:discord.TextChannel, clone_parent:str,
-                       controller_name:str=None):
-        super().__init__(clone_parent, controller_name)
-        self.channel = channel
-        self.members = set()
-        self.members_who_pushed = set()
-
-
-    async def ready_message(self):
-        await self.channel.send(f"{self.ui.name}: READY")
-
-    async def close(self):
-        super().close()
-        await self.channel.send(f"{self.ui.name}: CLOSED")
-
-    def channel_and_member_check(self, channel:discord.TextChannel,
-            member: discord.Member):
-        if self.channel.id != channel.id:
-            return False
-
-        return member in self.members
-
-    def perform_action(self, member:discord.Member, actions:str,
-            max_button_presses: int, min_participation: float):
-        # Check if at least half the team pushed a button
-        if len(self.members_who_pushed)/len(self.members) >=\
-                min_participation:
-            # All have pushed, reset list
-            self.members_who_pushed = set()
-
-        # Check if member has already pressed a button since reset
-        if member in self.members_who_pushed:
-            return
-
-        # Collect valid actions
-        validated_actions = []
-        # Look at all button press, to a limit
-        mbp = max(1, int(max_button_presses / len(self.members)))
-        for action in itertools.islice(actions.split(" "), mbp):
-            if ACTIONS.get(action) is not None:
-                act = ACTIONS.get(action)
-                placed = False
-                for i in range(len(validated_actions)):
-                    if not act in validated_actions[i]:
-                        placed = True
-                        validated_actions[i].append(act)
-                        break
-                if not placed:
-                    validated_actions.append([act])
-
-        # Push button
-        if len(validated_actions) > 0:
-            # Add member to pressed list
-            self.members_who_pushed.add(member)
-            for action_set in validated_actions:
-                self.perform_actions(action_set)
-                time.sleep(1/8)
 
 class Controllers(commands.Cog):
     def __init__(self, bot:Red):
@@ -99,6 +42,7 @@ class Controllers(commands.Cog):
                 )
         self._conf.register_global(**_DEFAULT_GLOBAL)
         self.controllers = {}
+        self.random_controllers = {}
         self.quiet = False
         self.locked = False
 
@@ -133,7 +77,7 @@ class Controllers(commands.Cog):
         # Interpret message
         for ctr in self.controllers.values():
             if ctr.channel_and_member_check(msg.channel, msg.author):
-                ctr.perform_action(msg.author, msg.content.lower(),
+                ctr.member_perform_action(msg.author, msg.content.lower(),
                         await self._conf.max_button_presses(),
                         await self._conf.min_participation())
 
@@ -191,11 +135,43 @@ class Controllers(commands.Cog):
 
     @commands.is_owner()
     @commands.command()
+    async def create_random_controller(self, ctx:commands.Context, 
+            clone_parent:str):
+        if len(self.random_controllers) == 0:
+            controller_number = 0
+        else:
+            controller_number = max(self.random_controllers.keys()) + 1
+
+        controller_name = f"RandomController{controller_number}"
+        self.random_controllers[controller_number] = RandomChannelController(
+                ctx.channel, clone_parent, controller_name)
+        await self.random_controllers[controller_number].ready_message()
+        await self.random_controllers[controller_number].\
+                start_random_controller()
+
+    @commands.is_owner()
+    @commands.command()
+    async def close_random_controller(self, ctx:commands.Context, 
+            controller_number:int):
+        controller = self.random_controllers.get(controller_number)
+        if controller is None:
+            await ctx.send(f"No such controller. Existing controllers are: ")
+            await self.list_controllers(ctx)
+            return
+      
+        await controller.close()
+        del self.random_controllers[controller_number]
+
+    @commands.is_owner()
+    @commands.command()
     async def close_all_controllers(self, ctx:commands.Context):
         for ctr in self.controllers.values():
             await ctr.close()
+        for ctr in self.random_controllers.values():
+            await ctr.close()
         # Delete entire list
         self.controllers = {}
+        self.random_controllers = {}
 
     @commands.command()
     async def sign_up_for_controller(self, ctx:commands.Context, 
@@ -269,6 +245,12 @@ class Controllers(commands.Cog):
             formatted_controllers += f"{self.controllers[ctr_id].ui.name}\n"
             for member in self.controllers[ctr_id].members:
                 formatted_controllers += f"   - {member.mention}\n"
+
+        formatted_controllers += "\nRandom Controllers:\n"
+        for ctr_id in self.random_controllers.keys():
+            formatted_controllers += f"{ctr_id} -- "
+            formatted_controllers += \
+                f"{self.random_controllers[ctr_id].ui.name}\n"
 
         await ctx.send(formatted_controllers)
 

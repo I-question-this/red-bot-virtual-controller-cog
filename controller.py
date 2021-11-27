@@ -3,18 +3,10 @@
 
 __author__="Tyler Westland"
 
-import argparse
+import asyncio
 from dataclasses import dataclass, replace
-# https://python-evdev.readthedocs.io/en/latest/index.html
 import evdev
-import json
-import os
-import random
-random.seed()
-import sys
-import time
-from typing import List
-
+from typing import List, Optional
 
 @dataclass(frozen=True)
 class Action:
@@ -48,16 +40,33 @@ ACTIONS = {
         "dright": Action(evdev.events.EV_KEY, evdev.ecodes.BTN_DPAD_RIGHT, 1, 0, 0.25),
     }
 
-# Create short and long versions
-extensions = {"t": 1/8, "s": 1/4, "l": 1.0}
-additions = dict()
-for adjective in extensions:
-    for action in ACTIONS:
-        additions[f"{adjective}{action}"] = replace(
-                ACTIONS[action], seconds=extensions[adjective])
-for new_action in additions:
-    ACTIONS[new_action] = additions[new_action]
+# Create variations of the actions with shorter or longer time
+adjectives = {
+        "tiny_": 1/8,
+        "t": 1/8,
+        "short_": 1/8,
+        "s": 1/4,
+        "long_": 1.0,
+        "l": 1.0
+        }
 
+variations = dict()
+for adjective in adjectives:
+    for action in ACTIONS:
+        variations[f"{adjective}{action}"] = replace(
+                ACTIONS[action], seconds=adjectives[adjective])
+
+for variation in variations:
+    ACTIONS[variation] = variations[variation]
+
+def expand_adjectives(buttons: List[str]):
+    def inner():
+        for button in buttons:
+            for adjective in adjectives:
+                yield f"{adjective}{button}"
+    return list(inner())
+
+SUGGESTED_BANNED_INPUTS = expand_adjectives(["start", "z"])
 
 class GameCubeController():
     def __init__(self, clone_parent:str, controller_name:str=None):
@@ -71,7 +80,10 @@ class GameCubeController():
     def close(self):
         self.ui.close()
 
-    def perform_actions(self, actions:List[Action]) -> None:
+    def is_open(self):
+        return evdev.util.is_device(f"/dev/input/{self.ui.name}")
+
+    async def perform_actions(self, actions:List[Action]) -> None:
         """Push button for specified time
         Parameters
         ----------
@@ -90,7 +102,7 @@ class GameCubeController():
         self.ui.syn()
 
         # Wait
-        time.sleep(seconds)
+        await asyncio.sleep(seconds)
 
         # Reset the actions
         for act in actions:
@@ -101,78 +113,3 @@ class GameCubeController():
 
         # Synchronize the resets
         self.ui.syn()
-
-def parse_arguments(args=None) -> None:
-    """Returns the parsed arguments.
-    Parameters
-    ----------
-    args: List of strings to be parsed by argparse.
-        The default None results in argparse using the values passed into
-        sys.args.
-    """
-    parser = argparse.ArgumentParser(
-            description="Create and control a virtual gamecube controller.",
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("clone_parent", help="Controller to clone from.")
-    parser.add_argument("-cn", "--controller_name", help="Controller name.")
-    args = parser.parse_args(args=args)
-    return args
-
-
-def main(clone_parent:str, controller_name:str=None) -> None:
-    """Main function.
-
-    Parameters
-    ----------
-    clone_parent: str
-        Controller to clone from.
-    controller_name: str
-        Controller name.
-    Raises
-    ------
-    FileNotFoundError
-        Means that the input file was not found.
-    """
-    if controller_name is None:
-        controller_name = "RANDOM"
-
-    GC = GameCubeController(clone_parent, controller_name)
-
-    while(True):
-        # Wait 0.25 seconds between button presses
-        time.sleep(0.25)
-        # Press a lot of the time
-        if random.randint(1,100)  <= 40:
-            GC.perform_actions([ACTIONS["a"]])
-        else:
-            def pick_a_action_besides_start():
-                action = "start"
-                while("start" in action):
-                    action = random.choice(list(ACTIONS.keys()))
-                return action
-
-            actions = [ACTIONS[pick_a_action_besides_start()]]
-            # Pick a second action, maybe?
-            if random.choice([True, False]):
-                actions.append(ACTIONS[pick_a_action_besides_start()])
-
-            GC.perform_actions(actions)
-    GC.close()
-
-    return None
-
-
-def cli_interface() -> None:
-    """Get program arguments from command line and run main"""
-    args = parse_arguments()
-    try:
-        main(**vars(args))
-        sys.exit(0)
-    except FileNotFoundError as exp:
-        print(exp, file=sys.stderr)
-        sys.exit(-1)
-
-
-# Execute only if this file is being run as the entry file.
-if __name__ == "__main__":
-    cli_interface()
