@@ -86,7 +86,7 @@ class Controllers(commands.Cog):
                         await self._conf.min_participation())
 
     @commands.is_owner()
-    @commands.command()
+    @commands.command(aliases=['mbp'])
     async def max_button_presses(self, ctx:commands.Context, new_max: int=None):
         """Displays or sets the max button press for people.
         Remember that the actual number is `max_button_presses/len(team_size)`
@@ -98,7 +98,7 @@ class Controllers(commands.Cog):
             f"max_button_press: {await self._conf.max_button_presses()}")
 
     @commands.is_owner()
-    @commands.command()
+    @commands.command(aliases=['mp'])
     async def minimum_participation(self, ctx:commands.Context, 
             new_min: float=None):
         """Displays or sets the minimum percentage of participation from a team.
@@ -112,7 +112,7 @@ class Controllers(commands.Cog):
             f"minimum_participation: {await self._conf.min_participation()}")
 
     @commands.is_owner()
-    @commands.command()
+    @commands.command(aliases=['createc'])
     async def create_controller(self, ctx:commands.Context, clone_parent:str):
         if len(self.controllers) == 0:
             controller_id = 0
@@ -125,7 +125,7 @@ class Controllers(commands.Cog):
         await self.controllers[controller_id].ready_message()
 
     @commands.is_owner()
-    @commands.command()
+    @commands.command(aliases=['closec'])
     async def close_controller(self, ctx:commands.Context, 
             controller_id:int):
         controller = self.controllers.get(controller_id)
@@ -137,7 +137,7 @@ class Controllers(commands.Cog):
         del self.controllers[controller_id]
 
     @commands.is_owner()
-    @commands.command()
+    @commands.command(aliases=['createrc'])
     async def create_random_controller(self, ctx:commands.Context, 
             clone_parent:str):
         if len(self.random_controllers) == 0:
@@ -153,7 +153,7 @@ class Controllers(commands.Cog):
                 start_random_controller()
 
     @commands.is_owner()
-    @commands.command()
+    @commands.command(aliases=['closerc'])
     async def close_random_controller(self, ctx:commands.Context, 
             controller_id:int):
         controller = self.random_controllers.get(controller_id)
@@ -166,8 +166,9 @@ class Controllers(commands.Cog):
         del self.random_controllers[controller_id]
 
     @commands.is_owner()
-    @commands.command()
-    async def close_all_controllers(self, ctx:commands.Context):
+    @commands.command(aliases=['close_all'])
+    async def close_all_normal_and_random_controllers(self,
+            ctx:commands.Context):
         for ctr in self.controllers.values():
             await ctr.close()
         for ctr in self.random_controllers.values():
@@ -176,7 +177,7 @@ class Controllers(commands.Cog):
         self.controllers = {}
         self.random_controllers = {}
 
-    @commands.command()
+    @commands.command(aliases=['signup'])
     async def sign_up_for_controller(self, ctx:commands.Context, 
             controller_id:int):
         if self.locked:
@@ -198,7 +199,7 @@ class Controllers(commands.Cog):
                        f"{controller_id}")
         
     @commands.is_owner()
-    @commands.command()
+    @commands.command(aliases=['sign_up_other', 'signupo'])
     async def sign_up_member_for_controller(self, ctx:commands.Context, 
             controller_id:int, member:discord.Member):
         ctx.author = member
@@ -210,7 +211,7 @@ class Controllers(commands.Cog):
         await self.sign_up_for_controller(ctx, controller_id)
         self.locked = locked_status
 
-    @commands.command()
+    @commands.command(aliases=['unsignup'])
     async def unsign_up_for_controller(self, ctx:commands.Context,
             controller_id:int):
         if self.locked:
@@ -228,7 +229,7 @@ class Controllers(commands.Cog):
                         "controller")
 
     @commands.is_owner()
-    @commands.command()
+    @commands.command(aliases=['unsign_up_other', 'unsignupo'])
     async def unsign_up_member_for_controller(self, ctx:commands.Context, 
             controller_id:int, member:discord.Member):
         ctx.author = member
@@ -240,7 +241,7 @@ class Controllers(commands.Cog):
         await self.unsign_up_for_controller(ctx, controller_id)
         self.locked = locked_status
 
-    @commands.command()
+    @commands.command(aliases=['lc'])
     async def list_controllers(self, ctx:commands.Context):
         formatted_controllers = "Controllers:\n"
         for ctr_id in self.controllers.keys():
@@ -257,19 +258,19 @@ class Controllers(commands.Cog):
 
         await ctx.send(formatted_controllers)
 
-    @commands.command()
+    @commands.command(aliases=['la'])
     async def list_actions(self, ctx:commands.Context):
         actions = "Available Actions:\n"
         actions += ", ".join(ACTIONS.keys())
         await ctx.send(actions)
 
     @commands.is_owner()
-    @commands.command()
+    @commands.command(aliases=['le'])
     async def list_evdev_devices(self, ctx:commands.Context):
         await ctx.send(f"{evdev.util.list_devices()}")
 
     @commands.is_owner()
-    @commands.command()
+    @commands.command(aliases=['pausec'])
     async def pause_controller(self, ctx:commands.Context, 
                                controller_id:int):
         if self.controllers.get(controller_id) is not None:
@@ -279,7 +280,7 @@ class Controllers(commands.Cog):
             await self.report_no_such_controller(ctx)
 
     @commands.is_owner()
-    @commands.command()
+    @commands.command(aliases=['unpausec'])
     async def unpause_controller(self, ctx:commands.Context, 
                                controller_id:int):
         if self.controllers.get(controller_id) is not None:
@@ -289,21 +290,21 @@ class Controllers(commands.Cog):
             await self.report_no_such_controller(ctx)
 
     @commands.is_owner()
-    @commands.command()
+    @commands.command(aliases=['pause_all'])
     async def pause_all_controllers(self, ctx:commands.Context):
         for ctr_id in self.controllers.keys():
             self.controllers[ctr_id].paused = True
         await ctx.send(f"Paused all controllers.")
 
     @commands.is_owner()
-    @commands.command()
+    @commands.command(aliases=['unpause_all'])
     async def unpause_all_controllers(self, ctx:commands.Context):
         for ctr_id in self.controllers.keys():
             self.controllers[ctr_id].paused = False
         await ctx.send(f"Unpaused all controllers.")
 
     @commands.is_owner()
-    @commands.command()
+    @commands.command(aliases=['pauserc'])
     async def pause_random_controller(self, ctx:commands.Context, 
                                controller_id:int):
         if self.random_controllers.get(controller_id) is not None:
@@ -313,7 +314,7 @@ class Controllers(commands.Cog):
             await self.report_no_such_controller(ctx)
 
     @commands.is_owner()
-    @commands.command()
+    @commands.command(aliases=['unpauserc'])
     async def unpause_random_controller(self, ctx:commands.Context, 
                                controller_id:int):
         if self.random_controllers.get(controller_id) is not None:
@@ -323,21 +324,21 @@ class Controllers(commands.Cog):
             await self.report_no_such_controller(ctx)
 
     @commands.is_owner()
-    @commands.command()
+    @commands.command(aliases=['pause_allrc'])
     async def pause_all_random_controllers(self, ctx:commands.Context):
         for ctr_id in self.random_controllers.keys():
             self.random_controllers[ctr_id].paused = True
         await ctx.send(f"Paused all random controllers.")
 
     @commands.is_owner()
-    @commands.command()
+    @commands.command(aliases=['unpause_allrc'])
     async def unpause_all_random_controllers(self, ctx:commands.Context):
         for ctr_id in self.random_controllers.keys():
             self.random_controllers[ctr_id].paused = False
         await ctx.send(f"Unpaused all random controllers.")
 
     @commands.is_owner()
-    @commands.command()
+    @commands.command(aliases=['toggle_lock'])
     async def toggle_sign_up_lock(self, ctx:commands.Context):
         self.locked = not self.locked
         await ctx.send(f"Controller Sign Up Lock set to: {self.locked}")
