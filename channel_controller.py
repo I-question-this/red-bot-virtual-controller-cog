@@ -46,12 +46,12 @@ class ChannelController(GameCubeController):
                 self.members_who_pushed = set()
             # Restrict max button presses down proportionally to the team size
             mbp = max(2, int(max_button_presses / len(self.members)))
+
+            # Check if member has already pressed a button since reset
+            if member in self.members_who_pushed:
+                return
         else:
             mbp = max_button_presses
-
-        # Check if member has already pressed a button since reset
-        if member in self.members_who_pushed:
-            return
 
         # Collect valid actions
         validated_actions = []
