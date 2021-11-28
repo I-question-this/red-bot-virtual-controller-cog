@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 import discord
 
 from .controller import GameCubeController, ACTIONS
@@ -28,16 +29,25 @@ class ChannelController(GameCubeController):
         return member in self.members
 
     async def member_perform_action(self, member:discord.Member, actions:str,
-            max_button_presses: int, min_participation: float):
+            max_button_presses: int, min_participation: float,
+            override_pause:bool=False):
         # If paused, do nothing!
-        if self.paused:
+        if self.paused and not override_pause:
             return
 
-        # Check if at least half the team pushed a button
-        if len(self.members_who_pushed)/len(self.members) >=\
-                min_participation:
-            # All have pushed, reset list
-            self.members_who_pushed = set()
+        # Prevent division by 0 when overriding a controller with no members.
+        # Usually occurs with random input controllers
+        if len(self.members) > 0:
+            # Check if at least the required percentage of the team
+            # participated
+            if len(self.members_who_pushed)/len(self.members) >=\
+                    min_participation:
+                # All have pushed, reset list
+                self.members_who_pushed = set()
+            # Restrict max button presses down proportionally to the team size
+            mbp = max(2, int(max_button_presses / len(self.members)))
+        else:
+            mbp = max_button_presses
 
         # Check if member has already pressed a button since reset
         if member in self.members_who_pushed:
@@ -46,7 +56,6 @@ class ChannelController(GameCubeController):
         # Collect valid actions
         validated_actions = []
         # Look at all button press, to a limit
-        mbp = max(1, int(max_button_presses / len(self.members)))
         for action in itertools.islice(actions.split(" "), mbp):
             if ACTIONS.get(action) is not None:
                 act = ACTIONS.get(action)

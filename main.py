@@ -81,7 +81,7 @@ class Controllers(commands.Cog):
         # Interpret message
         for ctr in self.controllers.values():
             if ctr.channel_and_member_check(msg.channel, msg.author):
-                ctr.member_perform_action(msg.author, msg.content.lower(),
+                await ctr.member_perform_action(msg.author, msg.content.lower(),
                         await self._conf.max_button_presses(),
                         await self._conf.min_participation())
 
@@ -115,55 +115,55 @@ class Controllers(commands.Cog):
     @commands.command()
     async def create_controller(self, ctx:commands.Context, clone_parent:str):
         if len(self.controllers) == 0:
-            controller_number = 0
+            controller_id = 0
         else:
-            controller_number = max(self.controllers.keys()) + 1
+            controller_id = max(self.controllers.keys()) + 1
 
-        controller_name = f"DiscordController{controller_number}"
-        self.controllers[controller_number] = ChannelController(
+        controller_name = f"DiscordController{controller_id}"
+        self.controllers[controller_id] = ChannelController(
                 ctx.channel, clone_parent, controller_name)
-        await self.controllers[controller_number].ready_message()
+        await self.controllers[controller_id].ready_message()
 
     @commands.is_owner()
     @commands.command()
     async def close_controller(self, ctx:commands.Context, 
-            controller_number:int):
-        controller = self.controllers.get(controller_number)
+            controller_id:int):
+        controller = self.controllers.get(controller_id)
         if controller is None:
             await self.report_no_such_controller()
             return
        
         await controller.close()
-        del self.controllers[controller_number]
+        del self.controllers[controller_id]
 
     @commands.is_owner()
     @commands.command()
     async def create_random_controller(self, ctx:commands.Context, 
             clone_parent:str):
         if len(self.random_controllers) == 0:
-            controller_number = 0
+            controller_id = 0
         else:
-            controller_number = max(self.random_controllers.keys()) + 1
+            controller_id = max(self.random_controllers.keys()) + 1
 
-        controller_name = f"RandomController{controller_number}"
-        self.random_controllers[controller_number] = RandomChannelController(
+        controller_name = f"RandomController{controller_id}"
+        self.random_controllers[controller_id] = RandomChannelController(
                 ctx.channel, clone_parent, controller_name)
-        await self.random_controllers[controller_number].ready_message()
-        await self.random_controllers[controller_number].\
+        await self.random_controllers[controller_id].ready_message()
+        await self.random_controllers[controller_id].\
                 start_random_controller()
 
     @commands.is_owner()
     @commands.command()
     async def close_random_controller(self, ctx:commands.Context, 
-            controller_number:int):
-        controller = self.random_controllers.get(controller_number)
+            controller_id:int):
+        controller = self.random_controllers.get(controller_id)
         if controller is None:
             await ctx.send(f"No such controller. Existing controllers are: ")
             await self.list_controllers(ctx)
             return
       
         await controller.close()
-        del self.random_controllers[controller_number]
+        del self.random_controllers[controller_id]
 
     @commands.is_owner()
     @commands.command()
@@ -178,7 +178,7 @@ class Controllers(commands.Cog):
 
     @commands.command()
     async def sign_up_for_controller(self, ctx:commands.Context, 
-            controller_number:int):
+            controller_id:int):
         if self.locked:
             await ctx.send(f"Controller sign up is currently locked.")
             return
@@ -187,7 +187,7 @@ class Controllers(commands.Cog):
             if ctx.author in self.controllers[ctr_id].members:
                 await self.unsign_up_for_controller(ctx, ctr_id)
 
-        ctr = self.controllers.get(controller_number)
+        ctr = self.controllers.get(controller_id)
         if ctr is None:
             await ctx.send(f"No such controller. Existing controllers are: ")
             await self.list_controllers(ctx)
@@ -195,24 +195,24 @@ class Controllers(commands.Cog):
       
         ctr.members.add(ctx.author)
         await ctx.send(f"{ctx.author.mention} is signed up for "
-                       f"{controller_number}")
+                       f"{controller_id}")
         
     @commands.is_owner()
     @commands.command()
     async def sign_up_member_for_controller(self, ctx:commands.Context, 
-            controller_number:int, member:discord.Member):
+            controller_id:int, member:discord.Member):
         ctx.author = member
         # Hack for getting around lock as owner
         # Would be dangerous if this were important for things other than
         # anti-griefing
         locked_status = self.locked
         self.locked = False
-        await self.sign_up_for_controller(ctx, controller_number)
+        await self.sign_up_for_controller(ctx, controller_id)
         self.locked = locked_status
 
     @commands.command()
     async def unsign_up_for_controller(self, ctx:commands.Context,
-            controller_number:int):
+            controller_id:int):
         if self.locked:
             await ctx.send(f"Controller sign up is currently locked.")
             return
@@ -221,7 +221,7 @@ class Controllers(commands.Cog):
             if ctx.author in ctr.members:
                 ctr.members.remove(ctx.author)
                 await ctx.send(f"Unsigned up {ctx.author.mention} from "
-                               f"{controller_number}")
+                               f"{controller_id}")
                 return
 
         await ctx.send(f"{ctx.author.mention} was not signed up for any "
@@ -230,14 +230,14 @@ class Controllers(commands.Cog):
     @commands.is_owner()
     @commands.command()
     async def unsign_up_member_for_controller(self, ctx:commands.Context, 
-            controller_number:int, member:discord.Member):
+            controller_id:int, member:discord.Member):
         ctx.author = member
         # Hack for getting around lock as owner
         # Would be dangerous if this were important for things other than
         # anti-griefing
         locked_status = self.locked
         self.locked = False
-        await self.unsign_up_for_controller(ctx, controller_number)
+        await self.unsign_up_for_controller(ctx, controller_id)
         self.locked = locked_status
 
     @commands.command()
@@ -271,20 +271,20 @@ class Controllers(commands.Cog):
     @commands.is_owner()
     @commands.command()
     async def pause_controller(self, ctx:commands.Context, 
-                               controller_number:int):
-        if self.controllers.get(controller_number) is not None:
-            self.controllers[controller_number].paused = True
-            await ctx.send(f"Paused controller: {controller_number}.")
+                               controller_id:int):
+        if self.controllers.get(controller_id) is not None:
+            self.controllers[controller_id].paused = True
+            await ctx.send(f"Paused controller: {controller_id}.")
         else:
             await self.report_no_such_controller(ctx)
 
     @commands.is_owner()
     @commands.command()
     async def unpause_controller(self, ctx:commands.Context, 
-                               controller_number:int):
-        if self.controllers.get(controller_number) is not None:
-            self.controllers[controller_number].paused = False
-            await ctx.send(f"Unpaused controller: {controller_number}.")
+                               controller_id:int):
+        if self.controllers.get(controller_id) is not None:
+            self.controllers[controller_id].paused = False
+            await ctx.send(f"Unpaused controller: {controller_id}.")
         else:
             await self.report_no_such_controller(ctx)
 
@@ -305,20 +305,20 @@ class Controllers(commands.Cog):
     @commands.is_owner()
     @commands.command()
     async def pause_random_controller(self, ctx:commands.Context, 
-                               controller_number:int):
-        if self.random_controllers.get(controller_number) is not None:
-            self.random_controllers[controller_number].paused = True
-            await ctx.send(f"Paused random controller: {controller_number}.")
+                               controller_id:int):
+        if self.random_controllers.get(controller_id) is not None:
+            self.random_controllers[controller_id].paused = True
+            await ctx.send(f"Paused random controller: {controller_id}.")
         else:
             await self.report_no_such_controller(ctx)
 
     @commands.is_owner()
     @commands.command()
     async def unpause_random_controller(self, ctx:commands.Context, 
-                               controller_number:int):
-        if self.random_controllers.get(controller_number) is not None:
-            self.random_controllers[controller_number].paused = False
-            await ctx.send(f"Unpaused random controller: {controller_number}.")
+                               controller_id:int):
+        if self.random_controllers.get(controller_id) is not None:
+            self.random_controllers[controller_id].paused = False
+            await ctx.send(f"Unpaused random controller: {controller_id}.")
         else:
             await self.report_no_such_controller(ctx)
 
@@ -341,3 +341,45 @@ class Controllers(commands.Cog):
     async def toggle_sign_up_lock(self, ctx:commands.Context):
         self.locked = not self.locked
         await ctx.send(f"Controller Sign Up Lock set to: {self.locked}")
+
+    @commands.is_owner()
+    @commands.command(aliases=['pushc'])
+    async def push_button_for_controller(self, ctx:commands.Context, 
+            controller_id:int, buttons:str):
+        """Manually push a button for a member input controller.
+        As this is an admin command it overrides the participation rules and
+        lifts the button pressing limit to 100 no matter the actual value.
+        controller_id: int
+            The controller id.
+        buttons: str
+            A space separated list of buttons to press.
+        """
+        if self.controllers.get(controller_id) is not None:
+            await self.controllers[controller_id].\
+                    member_perform_action(ctx.author, buttons.lower(),
+                                          100, # No need to constrain ourselves
+                                          0, # No need to block our selves
+                                          True) # Override the pause
+        else:
+            await self.report_no_such_controller(ctx)
+
+    @commands.is_owner()
+    @commands.command(aliases=['pushrc'])
+    async def push_button_for_random_controller(self, ctx:commands.Context, 
+            controller_id:int, buttons:str):
+        """Manually push a button for a random input controller.
+        As this is an admin command it overrides the participation rules and
+        lifts the button pressing limit to 100 no matter the actual value.
+        controller_id: int
+            The controller id.
+        buttons: str
+            A space separated list of buttons to press.
+        """
+        if self.random_controllers.get(controller_id) is not None:
+            await self.random_controllers[controller_id].\
+                    member_perform_action(ctx.author, buttons.lower(),
+                                          100, # No need to constrain ourselves
+                                          0, # No need to block our selves
+                                          True) # Override the pause
+        else:
+            await self.report_no_such_controller(ctx)
