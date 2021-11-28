@@ -10,7 +10,6 @@ class RandomChannelController(ChannelController):
     def __init__(self, channel:discord.TextChannel, clone_parent:str,
                  controller_name:str):
         super().__init__(channel, clone_parent, controller_name)
-        self.paused = False
         self.__keep_going = True
 
     async def close(self):

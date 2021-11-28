@@ -8,6 +8,7 @@ class ChannelController(GameCubeController):
     def __init__(self, channel:discord.TextChannel, clone_parent:str,
                  controller_name:str):
         super().__init__(clone_parent, controller_name)
+        self.paused = False
         self.channel = channel
         self.members = set()
         self.members_who_pushed = set()
@@ -28,6 +29,10 @@ class ChannelController(GameCubeController):
 
     async def member_perform_action(self, member:discord.Member, actions:str,
             max_button_presses: int, min_participation: float):
+        # If paused, do nothing!
+        if self.paused:
+            return
+
         # Check if at least half the team pushed a button
         if len(self.members_who_pushed)/len(self.members) >=\
                 min_participation:

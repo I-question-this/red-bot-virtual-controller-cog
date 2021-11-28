@@ -46,6 +46,10 @@ class Controllers(commands.Cog):
         self.quiet = False
         self.locked = False
 
+    async def report_no_such_controller(self, ctx:commands.Context):
+        await ctx.send(f"No such controller. Existing controllers are: ")
+        await self.list_controllers(ctx)
+
     @commands.Cog.listener()
     async def on_shutdown(self):
         for ctr in self.controllers:
@@ -126,8 +130,7 @@ class Controllers(commands.Cog):
             controller_number:int):
         controller = self.controllers.get(controller_number)
         if controller is None:
-            await ctx.send(f"No such controller. Existing controllers are: ")
-            await self.list_controllers(ctx)
+            await self.report_no_such_controller()
             return
        
         await controller.close()
@@ -267,9 +270,71 @@ class Controllers(commands.Cog):
 
     @commands.is_owner()
     @commands.command()
-    async def toggle_controller_quiet(self, ctx:commands.Context):
-        self.quiet = not self.quiet
-        await ctx.send(f"Controllers Quiet set to: {self.quiet}")
+    async def pause_controller(self, ctx:commands.Context, 
+                               controller_number:int):
+        if self.controllers.get(controller_number) is not None:
+            self.controllers[controller_number].paused = True
+            await ctx.send(f"Paused controller: {controller_number}.")
+        else:
+            await self.report_no_such_controller(ctx)
+
+    @commands.is_owner()
+    @commands.command()
+    async def unpause_controller(self, ctx:commands.Context, 
+                               controller_number:int):
+        if self.controllers.get(controller_number) is not None:
+            self.controllers[controller_number].paused = False
+            await ctx.send(f"Unpaused controller: {controller_number}.")
+        else:
+            await self.report_no_such_controller(ctx)
+
+    @commands.is_owner()
+    @commands.command()
+    async def pause_all_controllers(self, ctx:commands.Context):
+        for ctr_id in self.controllers.keys():
+            self.controllers[ctr_id].paused = True
+        await ctx.send(f"Paused all controllers.")
+
+    @commands.is_owner()
+    @commands.command()
+    async def unpause_all_controllers(self, ctx:commands.Context):
+        for ctr_id in self.controllers.keys():
+            self.controllers[ctr_id].paused = False
+        await ctx.send(f"Unpaused all controllers.")
+
+    @commands.is_owner()
+    @commands.command()
+    async def pause_random_controller(self, ctx:commands.Context, 
+                               controller_number:int):
+        if self.random_controllers.get(controller_number) is not None:
+            self.random_controllers[controller_number].paused = True
+            await ctx.send(f"Paused random controller: {controller_number}.")
+        else:
+            await self.report_no_such_controller(ctx)
+
+    @commands.is_owner()
+    @commands.command()
+    async def unpause_random_controller(self, ctx:commands.Context, 
+                               controller_number:int):
+        if self.random_controllers.get(controller_number) is not None:
+            self.random_controllers[controller_number].paused = False
+            await ctx.send(f"Unpaused random controller: {controller_number}.")
+        else:
+            await self.report_no_such_controller(ctx)
+
+    @commands.is_owner()
+    @commands.command()
+    async def pause_all_random_controllers(self, ctx:commands.Context):
+        for ctr_id in self.random_controllers.keys():
+            self.random_controllers[ctr_id].paused = True
+        await ctx.send(f"Paused all random controllers.")
+
+    @commands.is_owner()
+    @commands.command()
+    async def unpause_all_random_controllers(self, ctx:commands.Context):
+        for ctr_id in self.random_controllers.keys():
+            self.random_controllers[ctr_id].paused = False
+        await ctx.send(f"Unpaused all random controllers.")
 
     @commands.is_owner()
     @commands.command()
