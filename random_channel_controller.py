@@ -29,6 +29,7 @@ class RandomChannelController(ChannelController):
 
                 # Check if paused
                 if self.paused:
+                    await asyncio.sleep(0.25)
                     continue
 
                 # Press "a" lot of the time

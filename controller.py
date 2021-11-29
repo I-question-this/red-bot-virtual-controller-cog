@@ -42,12 +42,16 @@ ACTIONS = {
 
 # Create variations of the actions with shorter or longer time
 adjectives = {
+        "nano_": 1/16,
+        "n": 1/16,
         "tiny_": 1/8,
         "t": 1/8,
         "short_": 1/8,
         "s": 1/4,
         "long_": 1.0,
-        "l": 1.0
+        "l": 1.0,
+        "double_": 2.0,
+        "d": 2.0
         }
 
 variations = dict()
@@ -62,6 +66,7 @@ for variation in variations:
 def expand_adjectives(buttons: List[str]):
     def inner():
         for button in buttons:
+            yield button
             for adjective in adjectives:
                 yield f"{adjective}{button}"
     return list(inner())
